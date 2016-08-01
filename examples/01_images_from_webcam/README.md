@@ -20,4 +20,5 @@ On a Ubuntu machine the dependencies could be installed using:
 2. sudo apt-get install openssl
 3. sudo pip install ibmiotf
 4. sudo apt-get install python-opencv
+
 However before installing these dependencies check that the version of the packages is equal or greater than the versions given above.
