@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import pickle
 import sys
 import time
@@ -12,14 +13,6 @@ from cv2 import *
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
-
-# TODO: Please update the values of these constans to match the details of your
-#       own device.
-ORGANIZATION_ID = "8aaaa8";
-DEVICE_TYPE     = "WebCamera";
-DEVICE_ID       = "WebCameraMicrosoftHD";
-AUTH_METHOD     = "token";
-AUTH_TOKEN      = "oaaaaaaaaaaaaaaaao";
 
 DEVICE_SND_EVT_NAME = "webcam";
 DEVICE_SND_MSG_FMT  = "json";
@@ -124,14 +117,44 @@ def getDeviceEventPayload(cameraClient):
     
     return data;
 
+def parseCommandLineOptions():
+    """
+        Parse the given command line options.
+
+        Args:
+            None.
+
+        Returns:
+            options: A argparse.Namespace instance representing the parsed command line options.
+            
+        Raises:
+            arparse.error if one of the required command line options is missing.
+    """
+    parser = argparse.ArgumentParser();
+
+    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organization_id");
+    parser.add_argument("-t", "--device-type", action="store", required=True, dest="device_type");
+    parser.add_argument("-i", "--device-id", action="store", required=True, dest="device_id");
+    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="auth_method");
+    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="auth_token");
+
+    # Parse command line options
+    options = parser.parse_args();
+
+    return options;
+
 
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 
+# Parse command line options
+options = parseCommandLineOptions();
+
 # Initialize web camera and device clients
-cameraClient    = initCameraClient();
-deviceClient    = initDeviceClient(ORGANIZATION_ID, DEVICE_TYPE, DEVICE_ID, AUTH_METHOD, AUTH_TOKEN);
+cameraClient = initCameraClient();
+deviceClient = initDeviceClient(options.organization_id, options.device_type, options.device_id, 
+                                options.auth_method, options.auth_token);
 
 # Initialize the window in which the captured images are displayed
 namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import json
 import pickle
 import sys
@@ -14,18 +15,8 @@ from cv2 import *
 # Constants
 # -----------------------------------------------------------------------------
 
-# TODO: Please update the values of these constans to match the details of your
-#       own application.
-ORGANIZATION_ID = "8aaaa8";
-APPLICATION_ID  = "sampleWebcamApp";
-AUTH_METHOD     = "apikey";
-AUTH_KEY        = "a-8aaaa8-aaaaaaaaaa";
-AUTH_TOKEN      = "aaaaaaaaaaaaaaaaaa";
-
-DEVICE_TYPE     = "WebCamera";
-DEVICE_ID       = "WebCameraMicrosoftHD";
+APPLICATION_ID  = "MySampleWebCamApp";
 DEVICE_EVT_NAME = "webcam";
-
 OPENCV_WIN_NAME = "WebCamera";
 
 
@@ -91,13 +82,44 @@ def receivedDeviceEventCallback(deviceEvent):
     # Display image
     imshow(OPENCV_WIN_NAME, image);
 
+def parseCommandLineOptions():
+    """
+        Parse the given command line options.
+
+        Args:
+            None.
+
+        Returns:
+            options: A argparse.Namespace instance containing the parsed command line options.
+            
+        Raises:
+            argparse.error if one of the required command line options is missing.
+    """
+    parser = argparse.ArgumentParser();
+
+    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organization_id");
+    parser.add_argument("-t", "--device-type", action="store", required=True, dest="device_type");
+    parser.add_argument("-i", "--device-id", action="store", required=True, dest="device_id");
+    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="auth_method");
+    parser.add_argument("-k", "--auth-key", action="store", required=True, dest="auth_key");
+    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="auth_token");
+
+    # Parse command line options
+    options = parser.parse_args();
+
+    return options;
+
 
 # -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 
+# Parse the command line options
+options = parseCommandLineOptions();
+
 # Initialize application client
-appClient = initAppClient(ORGANIZATION_ID, APPLICATION_ID, AUTH_METHOD, AUTH_KEY, AUTH_TOKEN);
+appClient = initAppClient(options.organization_id, APPLICATION_ID, options.auth_method, 
+                          options.auth_key, options.auth_token);
 
 # Initialize the window in which the received images are displayed
 namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
@@ -106,10 +128,10 @@ namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
 appClient.connect();
 
 # Subscribe to device events for the webcam device
-appClient.subscribeToDeviceEvents(DEVICE_TYPE, DEVICE_ID, DEVICE_EVT_NAME);
+appClient.subscribeToDeviceEvents(options.device_type, options.device_id, DEVICE_EVT_NAME);
 
 # Set the callback for device events
-appClient.deviceEventCallback = receivedDeviceEventCallback
+appClient.deviceEventCallback = receivedDeviceEventCallback;
 
 # While the key "q" was not pressed wait for new device events
 keyPressed = 0;
