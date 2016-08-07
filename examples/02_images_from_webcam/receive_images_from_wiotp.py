@@ -4,19 +4,16 @@ import argparse
 import json
 import pickle
 import sys
-import time
-
-import ibmiotf.application
 
 from cv2 import *
+
+import ibmiotf.application
 
 
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
 
-APPLICATION_ID  = "MySampleWebCamApp";
-DEVICE_EVT_NAME = "webcam";
 OPENCV_WIN_NAME = "WebCamera";
 
 
@@ -51,13 +48,13 @@ def initAppClient(organizationId, applicationId, authMethod, authKey, authToken)
             "auth-token"    : authToken
         };
 
-        print("Connecting to application using options: %s" % str(appOptions));
+        print("Creating application client using options: %s" % str(appOptions));
 
         appClient = ibmiotf.application.Client(appOptions);
 
         return appClient;
     except Exception as exception:
-        print("Caught exception connecting application: %s" % str(exception));
+        print("Failed to create application client: %s" % str(exception));
 
         sys.exit(1);
 
@@ -78,7 +75,7 @@ def receivedDeviceEventCallback(deviceEvent):
 
     # Unpickle the received event data
     image = pickle.loads(deviceEvent.data["img"]);
-    
+
     # Display image
     imshow(OPENCV_WIN_NAME, image);
 
@@ -97,12 +94,15 @@ def parseCommandLineOptions():
     """
     parser = argparse.ArgumentParser();
 
-    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organization_id");
-    parser.add_argument("-t", "--device-type", action="store", required=True, dest="device_type");
-    parser.add_argument("-i", "--device-id", action="store", required=True, dest="device_id");
-    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="auth_method");
-    parser.add_argument("-k", "--auth-key", action="store", required=True, dest="auth_key");
-    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="auth_token");
+    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organizationId");
+    parser.add_argument("-p", "--application-id", action="store", required=True, dest="applicationId");
+    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="authMethod");
+    parser.add_argument("-k", "--auth-key", action="store", required=True, dest="authKey");
+    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="authToken");
+    parser.add_argument("-t", "--device-type", action="store", required=True, dest="deviceType");
+    parser.add_argument("-i", "--device-id", action="store", required=True, dest="deviceId");
+    parser.add_argument("-e", "--device-event-name", action="store", required=True, dest="deviceEventName");
+    parser.add_argument("-f", "--device-event-format", action="store", required=True, dest="deviceEventFormat");
 
     # Parse command line options
     options = parser.parse_args();
@@ -117,9 +117,9 @@ def parseCommandLineOptions():
 # Parse the command line options
 options = parseCommandLineOptions();
 
-# Initialize application client
-appClient = initAppClient(options.organization_id, APPLICATION_ID, options.auth_method, 
-                          options.auth_key, options.auth_token);
+# Create application client
+appClient = initAppClient(options.organizationId, options.applicationId, options.authMethod, 
+                          options.authKey, options.authToken);
 
 # Initialize the window in which the received images are displayed
 namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
@@ -127,13 +127,14 @@ namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
 # Connect application client
 appClient.connect();
 
-# Subscribe to device events for the webcam device
-appClient.subscribeToDeviceEvents(options.device_type, options.device_id, DEVICE_EVT_NAME);
+# Subscribe to device events
+appClient.subscribeToDeviceEvents(options.deviceType, options.deviceId, options.deviceEventName, 
+                                  options.deviceEventFormat);
 
 # Set the callback for device events
 appClient.deviceEventCallback = receivedDeviceEventCallback;
 
-# While the key "q" was not pressed wait for new device events
+# While the key 'q' was not pressed wait for new device events
 keyPressed = 0;
 
 while chr(keyPressed & 255) != 'q':

@@ -1,12 +1,5 @@
 # Sample application for capturing images from webcam and sending them to the IBM Watson IoT Platform
 
-To __run__ the application you need to update the values of the following constants in the python scripts:
-- ORGANIZATION_ID;
-- DEVICE_TYPE;
-- DEVICE_ID;
-- AUTH_KEY;
-- AUTH_TOKEN.
-
 __Dependencies__:
 
 1. Python 2.7.9 ([Link](https://www.python.org/downloads/release/python-279/)).

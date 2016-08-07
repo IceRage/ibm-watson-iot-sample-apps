@@ -3,19 +3,16 @@
 import argparse
 import pickle
 import sys
-import time
+
+from cv2 import *
 
 import ibmiotf.device
 
-from cv2 import *
 
 
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
-
-DEVICE_SND_EVT_NAME = "webcam";
-DEVICE_SND_MSG_FMT  = "json";
 
 OPENCV_WIN_NAME = "WebCamera";
 
@@ -73,22 +70,22 @@ def initDeviceClient(organizationId, deviceTypeId, deviceId, authMethod, authTok
             "auth-token"    : authToken
         };
 
-        print("Connecting to device using options: %s" % str(deviceOptions));
+        print("Creating device client using options: %s" % str(deviceOptions));
 
         deviceClient = ibmiotf.device.Client(deviceOptions);
 
         return deviceClient;
     except Exception as exception:
-        print("Caught exception connecting device: %s" % str(exception));
+        print("Failed to create device client: %s" % str(exception));
 
-        sys.exit(2);
+        sys.exit(1);
 
 def getDeviceEventPayload(cameraClient):
     """
         Get a dictionary instance representing the device event payload.
 
         Args:
-            cameraClient: An instance of cv2.VideoCapture used to communicate with the local webcam.
+           cameraClient: An instance of cv2.VideoCapture used to communicate with the local webcam. 
 
         Returns:
             A dictionary instance representing the device event payload.
@@ -106,16 +103,17 @@ def getDeviceEventPayload(cameraClient):
 
         # Reduce the image size by a factor of 10 to reduce the size of the payload
         imageScaled = resize(image, None, fx = 0.1, fy = 0.1, interpolation = INTER_CUBIC);
- 
+
         # Serialize image using pickle
         imgPayload = pickle.dumps(imageScaled);
     else:
         imgPayload = "Could not capture image from webcam.";
-  
+
     # Prepare device event payload
     data = {"img" : imgPayload};
-    
+
     return data;
+
 
 def parseCommandLineOptions():
     """
@@ -132,11 +130,13 @@ def parseCommandLineOptions():
     """
     parser = argparse.ArgumentParser();
 
-    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organization_id");
-    parser.add_argument("-t", "--device-type", action="store", required=True, dest="device_type");
-    parser.add_argument("-i", "--device-id", action="store", required=True, dest="device_id");
-    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="auth_method");
-    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="auth_token");
+    parser.add_argument("-o", "--organization-id", action="store", required=True, dest="organizationId");
+    parser.add_argument("-t", "--device-type", action="store", required=True, dest="deviceType");
+    parser.add_argument("-i", "--device-id", action="store", required=True, dest="deviceId");
+    parser.add_argument("-m", "--auth-method", action="store", required=True, dest="authMethod");
+    parser.add_argument("-a", "--auth-token", action="store", required=True, dest="authToken");
+    parser.add_argument("-e", "--device-event-name", action="store", required=True, dest="deviceEventName");
+    parser.add_argument("-f", "--device-event-format", action="store", required=True, dest="deviceEventFormat");
 
     # Parse command line options
     options = parser.parse_args();
@@ -151,10 +151,12 @@ def parseCommandLineOptions():
 # Parse command line options
 options = parseCommandLineOptions();
 
-# Initialize web camera and device clients
+# Create camera client
 cameraClient = initCameraClient();
-deviceClient = initDeviceClient(options.organization_id, options.device_type, options.device_id, 
-                                options.auth_method, options.auth_token);
+
+# Create device client
+deviceClient = initDeviceClient(options.organizationId, options.deviceType, options.deviceId, 
+                                options.authMethod, options.authToken);
 
 # Initialize the window in which the captured images are displayed
 namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
@@ -162,17 +164,17 @@ namedWindow(OPENCV_WIN_NAME, WND_PROP_FULLSCREEN);
 # Connect device client
 deviceClient.connect();
 
-# Send 1 image every second until the key "q" is pressed
+# Send data whenever the user presses a key different from 'q'
 keyPressed = 0;
 
 while chr(keyPressed & 255) != 'q':
     # Prepare data to be sent
     data = getDeviceEventPayload(cameraClient);
 
-    # Send the image
-    deviceClient.publishEvent(DEVICE_SND_EVT_NAME, DEVICE_SND_MSG_FMT, data, qos = 1);
+    # Send data
+    deviceClient.publishEvent(options.deviceEventName, options.deviceEventFormat, data);
 
-    # Wait for 1 second or until a key is pressed
+    # Wait for a new key to be pressed up to one second
     keyPressed = waitKey(1000);
 
 # Destroy the window used to display images
