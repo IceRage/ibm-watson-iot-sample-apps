@@ -62,11 +62,9 @@ def receivedDeviceEventCallback(deviceEvent):
     """
     print("Received device event %s at %s for %s." % (deviceEvent.event, deviceEvent.timestamp.isoformat(), deviceEvent.device));
 
-    # TODO: Process the event data as required for your application.
-    # 
-    # Example: 
-    # data = deviceEvent.data;
-    # print("Received number: %d" % data["number"]);
+    data = deviceEvent.data;
+
+    print("Received number: %d" % data["number"]);
 
 def parseCommandLineOptions():
     """

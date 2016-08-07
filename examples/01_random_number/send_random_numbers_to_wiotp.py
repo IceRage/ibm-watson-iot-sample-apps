@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import random
 import sys
 
 import ibmiotf.device
@@ -60,11 +61,12 @@ def getDeviceEventPayload():
         Raises:
             None.
     """
-    # TODO: Add your application-specific payload to the data dictionary
-    #
-    # Example:
-    # data = {"number" : 5};
-    # return data;
+    randomNumber = random.randint(0, 1000000);
+    data         = {"number" : randomNumber};
+
+    sys.stdout.write("Payload to be sent: %d" % randomNumber);
+
+    return data;
 
 def parseCommandLineOptions():
     """
@@ -109,7 +111,7 @@ deviceClient = initDeviceClient(options.organizationId, options.deviceType, opti
 # Connect device client
 deviceClient.connect();
 
-# Send data whenever the user presses a key different from 'q'
+# Send data whenever the user presses a key different from "q"
 while sys.stdin.readline() != "q\n":
     # Prepare data to be sent
     data = getDeviceEventPayload();
